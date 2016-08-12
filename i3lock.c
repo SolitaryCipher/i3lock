@@ -981,13 +981,14 @@ int main(int argc, char *argv[]) {
             img = NULL;
         }
         /* Desaturate image */
-        if (desaturate > 0.0) {
-            cairo_t* cr = cairo_create(img);
-            cairo_set_source_rgba(cr, 1, 1, 1, desaturate);
-            cairo_set_operator(cr, CAIRO_OPERATOR_HSL_SATURATION);
-            cairo_paint(cr);
-            cairo_destroy(cr);
-        }
+    }
+
+    if (img && desaturate > 0.0) {
+        cairo_t* cr = cairo_create(img);
+        cairo_set_source_rgba(cr, 1, 1, 1, desaturate);
+        cairo_set_operator(cr, CAIRO_OPERATOR_HSL_SATURATION);
+        cairo_paint(cr);
+        cairo_destroy(cr);
     }
 
     /* Pixmap on which the image is rendered to (if any) */
