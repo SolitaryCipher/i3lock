@@ -21,6 +21,8 @@ This fork has the following:
 
 - Option to use wallpaper as lock screen image [-w]
 
+- Option to desaturate img if used [-D (0.0 to 1.0)]
+
 - A new lock icon indicator
 
 Requirements
