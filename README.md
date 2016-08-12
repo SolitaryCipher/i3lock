@@ -17,6 +17,12 @@ Many little improvements have been made to i3lock over time:
 
 - i3lock uses PAM and therefore is compatible with LDAP etc.
 
+This fork has the following:
+
+- Option to use wallpaper as lock screen image [-w]
+
+- A new lock icon indicator
+
 Requirements
 ------------
 - pkg-config
