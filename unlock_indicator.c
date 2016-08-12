@@ -21,7 +21,7 @@
 #include "unlock_indicator.h"
 #include "xinerama.h"
 
-#define LOCK_SCALE 4.0
+#define LOCK_SCALE 3.5
 #define LOCK_RADIUS (25 * LOCK_SCALE)
 #define LOCK_CENTER (32 * LOCK_SCALE)
 #define LOCK_SIZE (2 * LOCK_CENTER)
