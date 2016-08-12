@@ -82,6 +82,7 @@ bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
 
 bool use_wallpaper = false;
+double desaturate = 0.0;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -788,6 +789,7 @@ int main(int argc, char *argv[]) {
         {"inactivity-timeout", required_argument, NULL, 'I'},
         {"show-failed-attempts", no_argument, NULL, 'f'},
         {"use-wallpaper", no_argument, NULL, 'w'},
+        {"desaturate", required_argument, NULL, 'D'},
         {NULL, no_argument, NULL, 0}};
 
     if ((pw = getpwuid(getuid())) == NULL)
@@ -795,7 +797,7 @@ int main(int argc, char *argv[]) {
     if ((username = pw->pw_name) == NULL)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.\n");
 
-    char *optstring = "hvnbdc:p:ui:teI:fw";
+    char *optstring = "hvnbdc:p:ui:teI:fwD:";
     while ((o = getopt_long(argc, argv, optstring, longopts, &optind)) != -1) {
         switch (o) {
             case 'v':
@@ -856,9 +858,14 @@ int main(int argc, char *argv[]) {
             case 'w':
                 use_wallpaper = true;
                 break;
+            case 'D':
+                if (sscanf(optarg, "%lf", &desaturate) != 1 || desaturate > 1.0) {
+                    errx(EXIT_FAILURE, "invaild value given for desaturate, must be between 0.0 and 1.0.\n");
+                }
+                break;
             default:
                 errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
-                                   " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w]");
+                                   " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w] [-D desaturate]");
         }
     }
 
@@ -974,11 +981,13 @@ int main(int argc, char *argv[]) {
             img = NULL;
         }
         /* Desaturate image */
-        cairo_t* cr = cairo_create(img);
-        cairo_set_source_rgba(cr, 1, 1, 1, 0.6);
-        cairo_set_operator(cr, CAIRO_OPERATOR_HSL_SATURATION);
-        cairo_paint(cr);
-        cairo_destroy(cr);
+        if (desaturate > 0.0) {
+            cairo_t* cr = cairo_create(img);
+            cairo_set_source_rgba(cr, 1, 1, 1, desaturate);
+            cairo_set_operator(cr, CAIRO_OPERATOR_HSL_SATURATION);
+            cairo_paint(cr);
+            cairo_destroy(cr);
+        }
     }
 
     /* Pixmap on which the image is rendered to (if any) */
