@@ -35,6 +35,8 @@
 #include "unlock_indicator.h"
 #include "xinerama.h"
 
+#include "wallpaper.h"
+
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
 #define START_TIMER(timer_obj, timeout, callback) \
@@ -78,6 +80,8 @@ cairo_surface_t *img = NULL;
 bool tile = false;
 bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
+
+bool use_wallpaper = false;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -783,6 +787,7 @@ int main(int argc, char *argv[]) {
         {"ignore-empty-password", no_argument, NULL, 'e'},
         {"inactivity-timeout", required_argument, NULL, 'I'},
         {"show-failed-attempts", no_argument, NULL, 'f'},
+        {"use-wallpaper", no_argument, NULL, 'w'},
         {NULL, no_argument, NULL, 0}};
 
     if ((pw = getpwuid(getuid())) == NULL)
@@ -790,7 +795,7 @@ int main(int argc, char *argv[]) {
     if ((username = pw->pw_name) == NULL)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.\n");
 
-    char *optstring = "hvnbdc:p:ui:teI:f";
+    char *optstring = "hvnbdc:p:ui:teI:fw";
     while ((o = getopt_long(argc, argv, optstring, longopts, &optind)) != -1) {
         switch (o) {
             case 'v':
@@ -848,9 +853,12 @@ int main(int argc, char *argv[]) {
             case 'f':
                 show_failed_attempts = true;
                 break;
+            case 'w':
+                use_wallpaper = true;
+                break;
             default:
                 errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
-                                   " [-i image.png] [-t] [-e] [-I timeout] [-f]");
+                                   " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w]");
         }
     }
 
@@ -944,6 +952,7 @@ int main(int argc, char *argv[]) {
     xcb_change_window_attributes(conn, screen->root, XCB_CW_EVENT_MASK,
                                  (uint32_t[]){XCB_EVENT_MASK_STRUCTURE_NOTIFY});
 
+    xcb_pixmap_t root_pixmap = 0;
     if (image_path) {
         /* Create a pixmap to render on, fill it with the background color */
         img = cairo_image_surface_create_from_png(image_path);
@@ -954,6 +963,23 @@ int main(int argc, char *argv[]) {
             img = NULL;
         }
     }
+    else if (use_wallpaper) {
+        xcb_pixmap_t root_pixmap = copy_root_pixmap(conn, screen);
+        img = cairo_xcb_surface_create(conn, root_pixmap,
+                get_root_visual_type(screen),
+                screen->width_in_pixels, screen->height_in_pixels);
+        if (cairo_surface_status(img) != CAIRO_STATUS_SUCCESS) {
+            fprintf(stderr, "Could not load wallpaper: %s\n",
+                    cairo_status_to_string(cairo_surface_status(img)));
+            img = NULL;
+        }
+        /* Desaturate image */
+        cairo_t* cr = cairo_create(img);
+        cairo_set_source_rgba(cr, 1, 1, 1, 0.6);
+        cairo_set_operator(cr, CAIRO_OPERATOR_HSL_SATURATION);
+        cairo_paint(cr);
+        cairo_destroy(cr);
+    }
 
     /* Pixmap on which the image is rendered to (if any) */
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
@@ -961,6 +987,7 @@ int main(int argc, char *argv[]) {
     /* open the fullscreen window, already with the correct pixmap in place */
     win = open_fullscreen_window(conn, screen, color, bg_pixmap);
     xcb_free_pixmap(conn, bg_pixmap);
+    xcb_free_pixmap(conn, root_pixmap);
 
     pid_t pid = fork();
     /* The pid == -1 case is intentionally ignored here:
