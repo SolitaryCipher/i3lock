@@ -21,14 +21,9 @@
 #include "unlock_indicator.h"
 #include "xinerama.h"
 
-#define LOCK_SCALE 3.5
-#define LOCK_RADIUS (25 * LOCK_SCALE)
-#define LOCK_CENTER (32 * LOCK_SCALE)
-#define LOCK_SIZE (2 * LOCK_CENTER)
-
-const double color_white[3] = {211 / 255.0, 208 / 255.0, 200 / 255.0};
-const double color_red[3]   = {222 / 255.0, 147 / 255.0,  97 / 255.0};
-const double color_blue[3]  = {102 / 255.0, 153 / 255.0, 204 / 255.0};
+#define ICON_RADIUS (25 * icon_scale)
+#define ICON_CENTER (32 * icon_scale)
+#define ICON_SIZE (2 * ICON_CENTER)
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -59,6 +54,12 @@ extern cairo_surface_t *img;
 extern bool tile;
 /* The background color to use (in hex). */
 extern char color[7];
+
+extern char color_icon[7];
+extern char color_verify[7];
+extern char color_wrong[7];
+
+extern double icon_scale;
 
 /* Whether the failed attempts should be displayed. */
 extern bool show_failed_attempts;
@@ -102,7 +103,7 @@ static double scaling_factor(void) {
  */
 xcb_pixmap_t draw_image(uint32_t *resolution) {
     xcb_pixmap_t bg_pixmap = XCB_NONE;
-    int button_diameter_physical = ceil(scaling_factor() * LOCK_SIZE);
+    int button_diameter_physical = ceil(scaling_factor() * ICON_SIZE);
     DEBUG("scaling_factor is %.f, physical diameter is %d px\n",
           scaling_factor(), button_diameter_physical);
 
@@ -144,6 +145,33 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_fill(xcb_ctx);
     }
 
+    char strgroups_base[3][3] = {
+        {color_icon[0], color_icon[1], '\0'},
+        {color_icon[2], color_icon[3], '\0'},
+        {color_icon[4], color_icon[5], '\0'}};
+    uint32_t rgb16_base[3] = {
+        (strtol(strgroups_base[0], NULL, 16)),
+        (strtol(strgroups_base[1], NULL, 16)),
+        (strtol(strgroups_base[2], NULL, 16))};
+
+    char strgroups_verify[3][3] = {
+        {color_verify[0], color_verify[1], '\0'},
+        {color_verify[2], color_verify[3], '\0'},
+        {color_verify[4], color_verify[5], '\0'}};
+    uint32_t rgb16_verify[3] = {
+        (strtol(strgroups_verify[0], NULL, 16)),
+        (strtol(strgroups_verify[1], NULL, 16)),
+        (strtol(strgroups_verify[2], NULL, 16))};
+
+    char strgroups_wrong[3][3] = {
+        {color_wrong[0], color_wrong[1], '\0'},
+        {color_wrong[2], color_wrong[3], '\0'},
+        {color_wrong[4], color_wrong[5], '\0'}};
+    uint32_t rgb16_wrong[3] = {
+        (strtol(strgroups_wrong[0], NULL, 16)),
+        (strtol(strgroups_wrong[1], NULL, 16)),
+        (strtol(strgroups_wrong[2], NULL, 16))};
+
     if (unlock_indicator) {
         cairo_scale(ctx, scaling_factor(), scaling_factor());
         cairo_set_line_cap(ctx, CAIRO_LINE_CAP_ROUND);
@@ -153,49 +181,49 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         switch(pam_state) {
             case STATE_PAM_IDLE:
                 cairo_set_source_rgb(ctx,
-                        color_white[0], color_white[1], color_white[2]);
+                        rgb16_base[0] / 255.0, rgb16_base[1] / 255.0, rgb16_base[2] / 255.0);
                 break;
             case STATE_PAM_VERIFY:
                 cairo_set_source_rgb(ctx,
-                        color_blue[0], color_blue[1], color_blue[2]);
+                        rgb16_verify[0] / 255.0, rgb16_verify[1] / 255.0, rgb16_verify[2] / 255.0);
                 break;
             case STATE_PAM_WRONG:
                 cairo_set_source_rgb(ctx,
-                        color_red[0], color_red[1], color_red[2]);
+                        rgb16_wrong[0] / 255.0, rgb16_wrong[1] / 255.0, rgb16_wrong[2] / 255.0);
                 break;
         }
 
         /* Draw the lock icon */
-        cairo_set_line_width(ctx, 3 * LOCK_SCALE);
-        cairo_arc(ctx, LOCK_CENTER, LOCK_CENTER, LOCK_RADIUS, 0, 2 * M_PI);
+        cairo_set_line_width(ctx, 3 * icon_scale);
+        cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS, 0, 2 * M_PI);
         cairo_stroke(ctx);
 
         /* Draw keyhole */
         cairo_set_source_rgb(ctx,
-                color_white[0], color_white[1], color_white[2]);
-        cairo_set_line_width(ctx, LOCK_SCALE);
-        cairo_arc(ctx, LOCK_CENTER, LOCK_CENTER + 4 * LOCK_SCALE, 3 * LOCK_SCALE, 0, 2 * M_PI);
+                rgb16_base[0] / 255.0, rgb16_base[1] / 255.0, rgb16_base[2] / 255.0);
+        cairo_set_line_width(ctx, icon_scale);
+        cairo_arc(ctx, ICON_CENTER, ICON_CENTER + 4 * icon_scale, 3 * icon_scale, 0, 2 * M_PI);
         cairo_fill(ctx);
 
-        cairo_set_line_width(ctx, 3 * LOCK_SCALE);
-        cairo_move_to(ctx, LOCK_CENTER, LOCK_CENTER + 4 * LOCK_SCALE);
-        cairo_rel_line_to(ctx, 0.0, 4.5 * LOCK_SCALE);
+        cairo_set_line_width(ctx, 3 * icon_scale);
+        cairo_move_to(ctx, ICON_CENTER, ICON_CENTER + 4 * icon_scale);
+        cairo_rel_line_to(ctx, 0.0, 4.5 * icon_scale);
         cairo_stroke(ctx);
 
         /* Draw body */
-        cairo_rectangle(ctx, LOCK_CENTER - 11 * LOCK_SCALE, LOCK_CENTER - 4 * LOCK_SCALE, 22 * LOCK_SCALE, 19 * LOCK_SCALE);
+        cairo_rectangle(ctx, ICON_CENTER - 11 * icon_scale, ICON_CENTER - 4 * icon_scale, 22 * icon_scale, 19 * icon_scale);
         cairo_stroke(ctx);
 
         /* Draw arm */
-        cairo_arc(ctx, LOCK_CENTER, LOCK_CENTER - 11 * LOCK_SCALE, 7.5 * LOCK_SCALE, M_PI, 0);
+        cairo_arc(ctx, ICON_CENTER, ICON_CENTER - 11 * icon_scale, 7.5 * icon_scale, M_PI, 0);
         cairo_stroke(ctx);
 
-        cairo_move_to(ctx, LOCK_CENTER - 7.5 * LOCK_SCALE, LOCK_CENTER - 11 * LOCK_SCALE);
-        cairo_rel_line_to(ctx, 0, 7 * LOCK_SCALE);
+        cairo_move_to(ctx, ICON_CENTER - 7.5 * icon_scale, ICON_CENTER - 11 * icon_scale);
+        cairo_rel_line_to(ctx, 0, 7 * icon_scale);
         cairo_stroke(ctx);
 
-        cairo_move_to(ctx, LOCK_CENTER + 7.5 * LOCK_SCALE, LOCK_CENTER - 11 * LOCK_SCALE);
-        cairo_rel_line_to(ctx, 0, 7 * LOCK_SCALE);
+        cairo_move_to(ctx, ICON_CENTER + 7.5 * icon_scale, ICON_CENTER - 11 * icon_scale);
+        cairo_rel_line_to(ctx, 0, 7 * icon_scale);
         cairo_stroke(ctx);
 
 
@@ -203,13 +231,13 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         if (input_position > 0) {
             /* Color dots red if caps lock is on */
             if (modifier_string != NULL && strcmp(modifier_string, "Caps Lock") == 0) {
-                cairo_set_source_rgb(ctx, color_red[0], color_red[1], color_red[2]);
+                cairo_set_source_rgb(ctx, rgb16_wrong[0] / 255.0, rgb16_wrong[1] / 255.0, rgb16_wrong[2] / 255.0);
             }
 
             int i;
             double dot_arc = (M_PI / 2.0) - ((M_PI / 25.0) * (input_position - 1) / 2.0);
             for(i = 0; i < input_position; ++i) {
-                cairo_arc(ctx, LOCK_CENTER, LOCK_CENTER, LOCK_RADIUS + 5 * LOCK_SCALE, dot_arc, dot_arc);
+                cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS + 5 * icon_scale, dot_arc, dot_arc);
                 cairo_stroke(ctx);
                 dot_arc += M_PI / 25.0;
             }
