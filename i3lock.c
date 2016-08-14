@@ -46,7 +46,7 @@
 
 typedef void (*ev_callback_t)(EV_P_ ev_timer *w, int revents);
 
-char color[7] = "ffffff";
+char color[7] = "000000";
 uint32_t last_resolution[2];
 xcb_window_t win;
 static xcb_cursor_t cursor;
@@ -83,6 +83,12 @@ bool skip_repeated_empty_password = false;
 
 bool use_wallpaper = false;
 double desaturate = 0.0;
+
+char color_icon[7] = "ffffff";
+char color_wrong[7] = "ff0000";
+char color_verify[7] = "0000ff";
+
+double icon_scale = 4.0;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -805,6 +811,10 @@ int main(int argc, char *argv[]) {
         {"show-failed-attempts", no_argument, NULL, 'f'},
         {"use-wallpaper", no_argument, NULL, 'w'},
         {"desaturate", required_argument, NULL, 'D'},
+        {"icon_scale", required_argument, NULL, 's'},
+        {"color-icon", required_argument, NULL, 0},
+        {"color-wrong", required_argument, NULL, 0},
+        {"color-verify", required_argument, NULL, 0},
         {NULL, no_argument, NULL, 0}};
 
     if ((pw = getpwuid(getuid())) == NULL)
@@ -812,7 +822,7 @@ int main(int argc, char *argv[]) {
     if ((username = pw->pw_name) == NULL)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.\n");
 
-    char *optstring = "hvnbdc:p:ui:teI:fwD:";
+    char *optstring = "hvnbdc:p:ui:teI:fwD:s:";
     while ((o = getopt_long(argc, argv, optstring, longopts, &optind)) != -1) {
         switch (o) {
             case 'v':
@@ -866,6 +876,36 @@ int main(int argc, char *argv[]) {
             case 0:
                 if (strcmp(longopts[optind].name, "debug") == 0)
                     debug_mode = true;
+                else if (strcmp(longopts[optind].name, "color-icon") == 0) {
+                    char *arg = optarg;
+
+                    /* Skip # if present */
+                    if (arg[0] == '#')
+                        arg++;
+
+                    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_icon) != 1)
+                        errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
+                }
+                else if (strcmp(longopts[optind].name, "color-wrong") == 0) {
+                    char *arg = optarg;
+
+                    /* Skip # if present */
+                    if (arg[0] == '#')
+                        arg++;
+
+                    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_wrong) != 1)
+                        errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
+                }
+                else if (strcmp(longopts[optind].name, "color-verify") == 0) {
+                    char *arg = optarg;
+
+                    /* Skip # if present */
+                    if (arg[0] == '#')
+                        arg++;
+
+                    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_verify) != 1)
+                        errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
+                }
                 break;
             case 'f':
                 show_failed_attempts = true;
@@ -878,9 +918,15 @@ int main(int argc, char *argv[]) {
                     errx(EXIT_FAILURE, "invaild value given for desaturate, must be between 0.0 and 1.0.\n");
                 }
                 break;
+            case 's':
+                if (sscanf(optarg, "%lf", &icon_scale) != 1 || icon_scale < 0.0) {
+                    errx(EXIT_FAILURE, "icon_scale must be greater than 0.\n");
+                }
+                break;
             default:
                 errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
-                                   " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w] [-D desaturate]");
+                                   " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w] [-D desaturate] [-s icon-scale]"
+                                   " --color-(icon|wrong|verify) color");
         }
     }
 
