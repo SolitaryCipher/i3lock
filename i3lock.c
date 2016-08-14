@@ -84,9 +84,11 @@ bool skip_repeated_empty_password = false;
 bool use_wallpaper = false;
 double desaturate = 0.0;
 
-char color_icon[7] = "ffffff";
-char color_wrong[7] = "ff0000";
+char color_icon[7]   = "ffffff";
+char color_wrong[7]  = "ff0000";
 char color_verify[7] = "0000ff";
+char color_bg[7]     = "000000";
+char color_border[7] = "ffffff";
 
 double icon_scale = 4.0;
 
@@ -815,6 +817,8 @@ int main(int argc, char *argv[]) {
         {"color-icon", required_argument, NULL, 0},
         {"color-wrong", required_argument, NULL, 0},
         {"color-verify", required_argument, NULL, 0},
+        {"color-bg",     required_argument, NULL, 0},
+        {"color-border", required_argument, NULL, 0},
         {NULL, no_argument, NULL, 0}};
 
     if ((pw = getpwuid(getuid())) == NULL)
@@ -906,6 +910,26 @@ int main(int argc, char *argv[]) {
                     if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_verify) != 1)
                         errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
                 }
+                else if (strcmp(longopts[optind].name, "color-bg") == 0) {
+                    char *arg = optarg;
+
+                    /* Skip # if present */
+                    if (arg[0] == '#')
+                        arg++;
+
+                    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_bg) != 1)
+                        errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
+                }
+                else if (strcmp(longopts[optind].name, "color-border") == 0) {
+                    char *arg = optarg;
+
+                    /* Skip # if present */
+                    if (arg[0] == '#')
+                        arg++;
+
+                    if (strlen(arg) != 6 || sscanf(arg, "%06[0-9a-fA-F]", color_border) != 1)
+                        errx(EXIT_FAILURE, "color is invalid, it must be given in 3-byte hexadecimal format: rrggbb\n");
+                }
                 break;
             case 'f':
                 show_failed_attempts = true;
@@ -926,7 +950,7 @@ int main(int argc, char *argv[]) {
             default:
                 errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
                                    " [-i image.png] [-t] [-e] [-I timeout] [-f] [-w] [-D desaturate] [-s icon-scale]"
-                                   " --color-(icon|wrong|verify) color");
+                                   " --color-(icon|wrong|verify|bg|border) color");
         }
     }
 

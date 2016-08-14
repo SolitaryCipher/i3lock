@@ -23,14 +23,10 @@
 
 #define sq2 1.41421356237
 
-#define LOCK_SCALE 5.0
-#define LOCK_RADIUS (25 * LOCK_SCALE)
-#define LOCK_CENTER (42 * LOCK_SCALE)
-#define LOCK_SIZE (2 * LOCK_CENTER)
-#define BG_SCALE (0.4 * LOCK_CENTER)
-
 #define ICON_RADIUS (25 * icon_scale)
-#define ICON_CENTER (32 * icon_scale)
+#define ICON_CENTER (42 * icon_scale)
+#define ICON_SIZE   (2  * ICON_CENTER)
+#define BG_SCALE    (15 * icon_scale)
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -65,6 +61,8 @@ extern char color[7];
 extern char color_icon[7];
 extern char color_verify[7];
 extern char color_wrong[7];
+extern char color_bg[7];
+extern char color_border[7];
 
 extern double icon_scale;
 
@@ -179,6 +177,24 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         (strtol(strgroups_wrong[1], NULL, 16)),
         (strtol(strgroups_wrong[2], NULL, 16))};
 
+    char strgroups_bg[3][3] = {
+        {color_bg[0], color_bg[1], '\0'},
+        {color_bg[2], color_bg[3], '\0'},
+        {color_bg[4], color_bg[5], '\0'}};
+    uint32_t rgb16_bg[3] = {
+        (strtol(strgroups_bg[0], NULL, 16)),
+        (strtol(strgroups_bg[1], NULL, 16)),
+        (strtol(strgroups_bg[2], NULL, 16))};
+
+    char strgroups_border[3][3] = {
+        {color_border[0], color_border[1], '\0'},
+        {color_border[2], color_border[3], '\0'},
+        {color_border[4], color_border[5], '\0'}};
+    uint32_t rgb16_border[3] = {
+        (strtol(strgroups_border[0], NULL, 16)),
+        (strtol(strgroups_border[1], NULL, 16)),
+        (strtol(strgroups_border[2], NULL, 16))};
+
     if (unlock_indicator) {
         cairo_scale(ctx, scaling_factor(), scaling_factor());
         cairo_set_line_cap(ctx, CAIRO_LINE_CAP_ROUND);
@@ -186,32 +202,32 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 
         /* draw the background octagon */
         cairo_set_source_rgb(ctx, 
-                color_bg[0], color_bg[1], color_bg[2]);
+                rgb16_bg[0] / 255.0, rgb16_bg[1] / 255.0, rgb16_bg[2] / 255.0);
         cairo_set_line_width(ctx, 1);
-        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+ICON_CENTER, (  1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+ICON_CENTER, ( (1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+ICON_CENTER, ( (1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+ICON_CENTER, (  1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+ICON_CENTER, (- 1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+ICON_CENTER, (-(1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+ICON_CENTER, (-(1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+ICON_CENTER, (- 1        * BG_SCALE)+ICON_CENTER);
         cairo_close_path(ctx);
         cairo_stroke_preserve(ctx);
         cairo_fill(ctx);
 
         /* draw the octagon border */
         cairo_set_source_rgb(ctx,
-            color_yellow[0], color_yellow[1], color_yellow[2]);
-        cairo_set_line_width(ctx, 3*LOCK_SCALE);
-        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
-        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+                rgb16_border[0] / 255.0, rgb16_border[1] / 255.0, rgb16_border[2] / 255.0);
+        cairo_set_line_width(ctx, 3*icon_scale);
+        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+ICON_CENTER, (  1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+ICON_CENTER, ( (1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+ICON_CENTER, ( (1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+ICON_CENTER, (  1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+ICON_CENTER, (- 1        * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+ICON_CENTER, (-(1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+ICON_CENTER, (-(1 + sq2) * BG_SCALE)+ICON_CENTER);
+        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+ICON_CENTER, (- 1        * BG_SCALE)+ICON_CENTER);
 
         cairo_close_path(ctx);
         //cairo_stroke_preserve(ctx);
@@ -233,6 +249,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                         rgb16_wrong[0] / 255.0, rgb16_wrong[1] / 255.0, rgb16_wrong[2] / 255.0);
                 break;
         }
+
         /* Draw the lock icon */
         cairo_set_line_width(ctx, 3 * icon_scale);
         cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS, 0, 2 * M_PI);
