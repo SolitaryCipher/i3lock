@@ -258,38 +258,38 @@ static void input_done(void) {
 
     /* Get state of Caps and Num lock modifiers, to be displayed in
      * STATE_PAM_WRONG state */
-    xkb_mod_index_t idx, num_mods;
-    const char *mod_name;
+    /* xkb_mod_index_t idx, num_mods; */
+    /* const char *mod_name; */
 
-    num_mods = xkb_keymap_num_mods(xkb_keymap);
+    /* num_mods = xkb_keymap_num_mods(xkb_keymap); */
 
-    for (idx = 0; idx < num_mods; idx++) {
-        if (!xkb_state_mod_index_is_active(xkb_state, idx, XKB_STATE_MODS_EFFECTIVE))
-            continue;
+    /* for (idx = 0; idx < num_mods; idx++) { */
+    /*     if (!xkb_state_mod_index_is_active(xkb_state, idx, XKB_STATE_MODS_EFFECTIVE)) */
+    /*         continue; */
 
-        mod_name = xkb_keymap_mod_get_name(xkb_keymap, idx);
-        if (mod_name == NULL)
-            continue;
+    /*     mod_name = xkb_keymap_mod_get_name(xkb_keymap, idx); */
+    /*     if (mod_name == NULL) */
+    /*         continue; */
 
-        /* Replace certain xkb names with nicer, human-readable ones. */
-        if (strcmp(mod_name, XKB_MOD_NAME_CAPS) == 0)
-            mod_name = "Caps Lock";
-        else if (strcmp(mod_name, XKB_MOD_NAME_ALT) == 0)
-            mod_name = "Alt";
-        else if (strcmp(mod_name, XKB_MOD_NAME_NUM) == 0)
-            mod_name = "Num Lock";
-        else if (strcmp(mod_name, XKB_MOD_NAME_LOGO) == 0)
-            mod_name = "Win";
+    /*     /1* Replace certain xkb names with nicer, human-readable ones. *1/ */
+    /*     if (strcmp(mod_name, XKB_MOD_NAME_CAPS) == 0) */
+    /*         mod_name = "Caps Lock"; */
+    /*     else if (strcmp(mod_name, XKB_MOD_NAME_ALT) == 0) */
+    /*         mod_name = "Alt"; */
+    /*     else if (strcmp(mod_name, XKB_MOD_NAME_NUM) == 0) */
+    /*         mod_name = "Num Lock"; */
+    /*     else if (strcmp(mod_name, XKB_MOD_NAME_LOGO) == 0) */
+    /*         mod_name = "Win"; */
 
-        char *tmp;
-        if (modifier_string == NULL) {
-            if (asprintf(&tmp, "%s", mod_name) != -1)
-                modifier_string = tmp;
-        } else if (asprintf(&tmp, "%s, %s", modifier_string, mod_name) != -1) {
-            free(modifier_string);
-            modifier_string = tmp;
-        }
-    }
+    /*     char *tmp; */
+    /*     if (modifier_string == NULL) { */
+    /*         if (asprintf(&tmp, "%s", mod_name) != -1) */
+    /*             modifier_string = tmp; */
+    /*     } else if (asprintf(&tmp, "%s, %s", modifier_string, mod_name) != -1) { */
+    /*         free(modifier_string); */
+    /*         modifier_string = tmp; */
+    /*     } */
+    /* } */
 
     pam_state = STATE_PAM_WRONG;
     failed_attempts += 1;
@@ -339,10 +339,25 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     char buffer[128];
     int n;
     bool ctrl;
+    bool caps;
     bool composed = false;
 
     ksym = xkb_state_key_get_one_sym(xkb_state, event->detail);
     ctrl = xkb_state_mod_name_is_active(xkb_state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_DEPRESSED);
+    caps = xkb_state_mod_name_is_active(xkb_state, XKB_MOD_NAME_CAPS, XKB_STATE_MODS_EFFECTIVE);
+
+    /* Set modifier string to caps if on */
+    if (caps) {
+        if (modifier_string == NULL) {
+            char* tmp;
+            if (asprintf(&tmp, "Caps Lock") != -1) {
+                modifier_string = tmp;
+            }
+        }
+    } else if (modifier_string != NULL) {
+        free(modifier_string);
+        modifier_string = NULL;
+    }
 
     /* The buffer will be null-terminated, so n >= 2 for 1 actual character. */
     memset(buffer, '\0', sizeof(buffer));
@@ -859,7 +874,7 @@ int main(int argc, char *argv[]) {
                 use_wallpaper = true;
                 break;
             case 'D':
-                if (sscanf(optarg, "%lf", &desaturate) != 1 || desaturate > 1.0) {
+                if (sscanf(optarg, "%lf", &desaturate) != 1 || desaturate > 1.0 || desaturate < 0.0) {
                     errx(EXIT_FAILURE, "invaild value given for desaturate, must be between 0.0 and 1.0.\n");
                 }
                 break;

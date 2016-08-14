@@ -26,9 +26,9 @@
 #define LOCK_CENTER (32 * LOCK_SCALE)
 #define LOCK_SIZE (2 * LOCK_CENTER)
 
-double color_white[3] = {211 / 255.0, 208 / 255.0, 200 / 255.0};
-double color_red[3]   = {222 / 255.0, 147 / 255.0,  97 / 255.0};
-double color_blue[3]  = {102 / 255.0, 153 / 255.0, 204 / 255.0};
+const double color_white[3] = {211 / 255.0, 208 / 255.0, 200 / 255.0};
+const double color_red[3]   = {222 / 255.0, 147 / 255.0,  97 / 255.0};
+const double color_blue[3]  = {102 / 255.0, 153 / 255.0, 204 / 255.0};
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -198,9 +198,14 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_rel_line_to(ctx, 0, 7 * LOCK_SCALE);
         cairo_stroke(ctx);
 
+
         /* Draw dots for password */
-        if(pam_state == STATE_PAM_IDLE)
-        {
+        if (input_position > 0) {
+            /* Color dots red if caps lock is on */
+            if (modifier_string != NULL && strcmp(modifier_string, "Caps Lock") == 0) {
+                cairo_set_source_rgb(ctx, color_red[0], color_red[1], color_red[2]);
+            }
+
             int i;
             double dot_arc = (M_PI / 2.0) - ((M_PI / 25.0) * (input_position - 1) / 2.0);
             for(i = 0; i < input_position; ++i) {
