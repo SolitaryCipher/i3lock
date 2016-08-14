@@ -19,13 +19,15 @@ Many little improvements have been made to i3lock over time:
 
 This fork has the following:
 
+- The indicator has a octagonal border around it
+
 - Option to use wallpaper as lock screen image [-w]
 
 - Option to desaturate image if used [-D (0.0 to 1.0)]
 
 - A new lock indicator with:
   * scale option (default 4.0) [-s]
-  * color options [--color-(icon|wrong|verify) rrggbb]
+  * color options [--color-(icon|wrong|verify|bg|border) rrggbb]
 
 Requirements
 ------------
