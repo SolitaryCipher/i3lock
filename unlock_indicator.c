@@ -21,14 +21,19 @@
 #include "unlock_indicator.h"
 #include "xinerama.h"
 
-#define LOCK_SCALE 3.5
+#define sq3 1.73205080756887729352 /* sqrt(3) */
+#define sq2 1.41421356237
+
+#define LOCK_SCALE 5.0
 #define LOCK_RADIUS (25 * LOCK_SCALE)
-#define LOCK_CENTER (32 * LOCK_SCALE)
+#define LOCK_CENTER (42 * LOCK_SCALE)
 #define LOCK_SIZE (2 * LOCK_CENTER)
+#define BG_SCALE (0.4 * LOCK_CENTER)
 
 const double color_white[3] = {211 / 255.0, 208 / 255.0, 200 / 255.0};
 const double color_red[3]   = {222 / 255.0, 147 / 255.0,  97 / 255.0};
 const double color_blue[3]  = {102 / 255.0, 153 / 255.0, 204 / 255.0};
+const double color_bg[3]    = { 61 / 255.0,  90 / 255.0, 120 / 255.0};
 
 /*******************************************************************************
  * Variables defined in i3lock.c.
@@ -90,7 +95,7 @@ pam_state_t pam_state;
  *
  */
 static double scaling_factor(void) {
-    const int dpi = (double)screen->height_in_pixels * 25.4 /
+    const int dpi = (double)screen->height_in_pixels * 25.0 /
                     (double)screen->height_in_millimeters;
     return (dpi / 96.0);
 }
@@ -149,6 +154,40 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_set_line_cap(ctx, CAIRO_LINE_CAP_ROUND);
         cairo_set_line_join(ctx, CAIRO_LINE_JOIN_ROUND);
 
+        /* draw the background octagon */
+        cairo_set_source_rgb(ctx, 
+            color_bg[0], color_bg[1], color_bg[2]);
+        cairo_set_line_width(ctx, 1);
+        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+        cairo_close_path(ctx);
+        cairo_stroke_preserve(ctx);
+        cairo_fill(ctx);
+
+        /* draw the octagon border */
+        cairo_set_source_rgb(ctx,
+                color_red[0], color_red[1], color_red[2]);
+        cairo_set_line_width(ctx, 3*LOCK_SCALE);
+        cairo_move_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (  1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (- 1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, (  1        * BG_SCALE)+LOCK_CENTER, (-(1 + sq2) * BG_SCALE)+LOCK_CENTER);
+        cairo_line_to(ctx, ( (1 + sq2) * BG_SCALE)+LOCK_CENTER, (- 1        * BG_SCALE)+LOCK_CENTER);
+
+        cairo_close_path(ctx);
+        //cairo_stroke_preserve(ctx);
+        cairo_stroke(ctx);
+        //cairo_fill(ctx);
+
         /* Draw outer circle, using appropriate color */
         switch(pam_state) {
             case STATE_PAM_IDLE:
@@ -164,7 +203,6 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                         color_red[0], color_red[1], color_red[2]);
                 break;
         }
-
         /* Draw the lock icon */
         cairo_set_line_width(ctx, 3 * LOCK_SCALE);
         cairo_arc(ctx, LOCK_CENTER, LOCK_CENTER, LOCK_RADIUS, 0, 2 * M_PI);
