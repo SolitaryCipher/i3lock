@@ -251,13 +251,13 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         }
 
         /* Draw the lock icon */
-        cairo_set_line_width(ctx, 3 * icon_scale);
-        cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS, 0, 2 * M_PI);
-        cairo_stroke(ctx);
+        //cairo_set_line_width(ctx, 3 * icon_scale);
+        //cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS, 0, 2 * M_PI);
+        //cairo_stroke(ctx);
 
         /* Draw keyhole */
-        cairo_set_source_rgb(ctx,
-                rgb16_base[0] / 255.0, rgb16_base[1] / 255.0, rgb16_base[2] / 255.0);
+        //cairo_set_source_rgb(ctx,
+        //        rgb16_base[0] / 255.0, rgb16_base[1] / 255.0, rgb16_base[2] / 255.0);
         cairo_set_line_width(ctx, icon_scale);
         cairo_arc(ctx, ICON_CENTER, ICON_CENTER + 4 * icon_scale, 3 * icon_scale, 0, 2 * M_PI);
         cairo_fill(ctx);
@@ -283,6 +283,8 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_rel_line_to(ctx, 0, 7 * icon_scale);
         cairo_stroke(ctx);
 
+        cairo_set_source_rgb(ctx,
+                rgb16_base[0] / 255.0, rgb16_base[1] / 255.0, rgb16_base[2] / 255.0);
 
         /* Draw dots for password */
         if (input_position > 0) {
@@ -292,13 +294,24 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             }
 
             int i;
+            //double between = 3;
+            //double radius = icon_scale;
+            //double full_length = (between + cairo_get_line_width(ctx) + 2*radius) * (input_position-1);
+            //double index = -full_length/2;
+
             double dot_arc = (M_PI / 2.0) - ((M_PI / 25.0) * (input_position - 1) / 2.0);
             for(i = 0; i < input_position; ++i) {
-                cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS + 5 * icon_scale, dot_arc, dot_arc);
+                cairo_arc(ctx, ICON_CENTER, ICON_CENTER, ICON_RADIUS + 1.5 * icon_scale, dot_arc, dot_arc);
                 cairo_stroke(ctx);
                 dot_arc += M_PI / 25.0;
+
+                //cairo_arc(ctx, ((double)ICON_CENTER)+index, ICON_CENTER+(22*icon_scale), radius, 0, 2.0 * M_PI);
+                //cairo_stroke(ctx);
+                //index += (2.0*radius) + cairo_get_line_width(ctx) + between;
             }
         }
+        // x, y, r,  angle1, angle2
+
     }
 
     if (xr_screens > 0) {
